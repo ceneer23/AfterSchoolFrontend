@@ -41,9 +41,8 @@
             class="product-card"
           >
             <h2>{{ product.title }}</h2>
-            <!-- Load images from the Render service's /images route -->
             <img
-              :src="'https://afterschoolbackend-3efk.onrender.com/images/' + product.image"
+              :src="product.image"
               :alt="product.title"
             />
             <p>{{ product.description }}</p>
