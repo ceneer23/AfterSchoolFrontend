@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>After School Activities Store</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1 @click="goHome">{{ sitename }}</h1>
+        <input
+          type="text"
+          v-model="searchQuery"
+          placeholder="Search activities..."
+        />
+        <select v-model="sortKey">
+          <option value="title">Title</option>
+          <option value="price">Price</option>
+          <option value="availableInventory">Stock</option>
+        </select>
+        <button @click="toggleSortDirection">
+          {{ sortAsc ? 'Asc' : 'Desc' }}
+        </button>
+        <button v-if="cartItemCount > 0" @click="showCheckout">
+          {{ cartItemCount }} <span class="fas fa-cart-plus"></span> Checkout
+        </button>
+      </header>
+
+      <main>
+        <div v-if="showProduct" class="product-container">
+          <div
+            v-for="product in sortedProducts"
+            :key="product._id"
+            class="product-card"
+          >
+            <h2>{{ product.title }}</h2>
+            <img :src="product.image" :alt="product.title" />
+            <p>{{ product.description }}</p>
+            <p>Price: ${{ product.price.toFixed(2) }}</p>
+            <p>Stock: {{ remainingStock(product) }}</p>
+            <button
+              class="add-to-cart"
+              @click="increaseQuantity(product)"
+              :disabled="!canAddToCart(product)"
+            >
+              Add to cart
+            </button>
+            <span v-if="remainingStock(product) === 0">Out of stock!</span>
+            <div class="rating">
+              <span v-for="n in product.rating">★</span>
+              <span v-for="n in 5 - product.rating">☆</span>
+            </div>
+          </div>
+        </div>
+
+        <div v-else class="checkout-container">
+          <div class="checkout-summary" v-if="cart.length">
+            <h3>Order Summary</h3>
+            <ul>
+              <li v-for="item in Object.values(cartSummary)" :key="item._id">
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                  "
+                >
+                  <div style="display: flex; align-items: center; gap: 10px">
+                    <img
+                      :src="item.image"
+                      :alt="item.title"
+                      style="width: 50px"
+                    />
+                    {{ item.title }}
+                  </div>
+                  <div class="quantity-controls">
+                    <button @click="decreaseQuantity(item)">−</button>
+                    <span>x{{ item.count }}</span>
+                    <button
+                      @click="increaseQuantity(item)"
+                      :disabled="remainingStock(item) === 0"
+                      title="No more stock"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div>${{ (item.price * item.count).toFixed(2) }}</div>
+                </div>
+              </li>
+            </ul>
+            <div class="total">Total: ${{ totalPrice.toFixed(2) }}</div>
+          </div>
+
+          <div class="checkout-form">
+            <h3>Delivery Information</h3>
+            <form @submit.prevent="submitForm">
+              <p>
+                <strong>First Name:</strong>
+                <input
+                  v-model.trim="order.firstName"
+                  :class="{ invalid: !/^[A-Za-z\s]+$/.test(order.firstName) }"
+                  required
+                  title="Only letters and spaces allowed"
+                />
+                <span
+                  v-if="order.firstName && !/^[A-Za-z\s]+$/.test(order.firstName)"
+                  class="error"
+                  >Please enter a valid first name.</span
+                >
+              </p>
+              <p>
+                <strong>Last Name:</strong>
+                <input
+                  v-model.trim="order.lastName"
+                  :class="{ invalid: !/^[A-Za-z\s]+$/.test(order.lastName) }"
+                  required
+                  title="Only letters and spaces allowed"
+                />
+                <span
+                  v-if="order.lastName && !/^[A-Za-z\s]+$/.test(order.lastName)"
+                  class="error"
+                  >Please enter a valid last name.</span
+                >
+              </p>
+              <p>
+                <strong>Phone:</strong>
+                <input
+                  v-model.trim="order.phone"
+                  :class="{ invalid: !/^\d{7,15}$/.test(order.phone) }"
+                  required
+                  title="Only numbers allowed (7 to 15 digits)"
+                />
+                <span
+                  v-if="order.phone && !/^\d{7,15}$/.test(order.phone)"
+                  class="error"
+                  >Phone must be 7 to 15 digits.</span
+                >
+              </p>
+              <p>
+                <strong>Address:</strong>
+                <input
+                  v-model.trim="order.address"
+                  :class="{ invalid: order.address.trim().length < 10 }"
+                  required
+                  title="At least 10 characters"
+                />
+                <span
+                  v-if="order.address && order.address.trim().length < 10"
+                  class="error"
+                  >Address must be at least 10 characters long.</span
+                >
+              </p>
+              <p>
+                <strong>City:</strong>
+                <input
+                  v-model.trim="order.city"
+                  :class="{ invalid: !order.city }"
+                  required
+                  title="Enter your city"
+                />
+              </p>
+              <p>
+                <strong>Zip Code:</strong>
+                <input
+                  v-model.trim="order.zip"
+                  :class="{ invalid: !/^\d{4,10}$/.test(order.zip) }"
+                  required
+                  title="Zip should be 4 to 10 digits"
+                />
+                <span
+                  v-if="order.zip && !/^\d{4,10}$/.test(order.zip)"
+                  class="error"
+                  >Zip code must be 4 to 10 digits.</span
+                >
+              </p>
+              <p>
+                <strong>State:</strong>
+                <select
+                  v-model="order.state"
+                  :class="{ invalid: !order.state }"
+                  required
+                >
+                  <option disabled value="">State</option>
+                  <option v-for="(name, code) in states" :value="name">
+                    {{ code }}
+                  </option>
+                </select>
+              </p>
+              <p>
+                <input
+                  type="checkbox"
+                  id="gift"
+                  v-model="order.gift"
+                  :true-value="sendGift"
+                  :false-value="dontSendGift"
+                />
+                <label for="gift">Ship As Gift?</label>
+              </p>
+              <p>
+                <input
+                  type="radio"
+                  id="home"
+                  value="Home"
+                  v-model="order.method"
+                />
+                <label for="home">Home</label>
+                <input
+                  type="radio"
+                  id="business"
+                  value="Business"
+                  v-model="order.method"
+                />
+                <label for="business">Business</label>
+              </p>
+
+              <table>
+                <tr>
+                  <td>Name</td>
+                  <td>{{ order.firstName }} {{ order.lastName }}</td>
+                </tr>
+                <tr>
+                  <td>Phone</td>
+                  <td>{{ order.phone }}</td>
+                </tr>
+                <tr>
+                  <td>Address</td>
+                  <td>{{ order.address }}</td>
+                </tr>
+                <tr>
+                  <td>City</td>
+                  <td>{{ order.city }}</td>
+                </tr>
+                <tr>
+                  <td>State</td>
+                  <td>{{ order.state }}</td>
+                </tr>
+                <tr>
+                  <td>Zip</td>
+                  <td>{{ order.zip }}</td>
+                </tr>
+                <tr>
+                  <td>Delivery</td>
+                  <td>{{ order.method }}</td>
+                </tr>
+                <tr>
+                  <td>Gift</td>
+                  <td>{{ order.gift }}</td>
+                </tr>
+                <tr>
+                  <td>Items</td>
+                  <td>{{ cartItemCount }}</td>
+                </tr>
+                <tr>
+                  <td>Total</td>
+                  <td>${{ totalPrice.toFixed(2) }}</td>
+                </tr>
+              </table>
+
+              <button type="submit" :disabled="!isFormValid">
+                Place Order
+              </button>
+              <button type="button" @click="goHome">Back</button>
+            </form>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      new Vue({
+        el: "#app",
+        data: {
+          sitename: "After School Activities Store",
+          products: [],
+          cart: [],
+          showProduct: true,
+          searchQuery: "",
+          sortKey: "title",
+          sortAsc: true,
+          order: {
+            firstName: "",
+            lastName: "",
+            phone: "",
+            address: "",
+            city: "",
+            state: "",
+            zip: "",
+            method: "Home",
+            gift: "Do not send as a gift",
+          },
+          sendGift: "Send as a gift",
+          dontSendGift: "Do not send as a gift",
+          states: {
+            AL: "Alabama",
+            AR: "Arkansas",
+            CA: "California",
+            NV: "Nevada",
+          },
+        },
+        created() {
+          fetch("http://localhost:3000/lessons")
+            .then((res) => res.json())
+            .then((data) => (this.products = data));
+        },
+        methods: {
+          increaseQuantity(item) {
+            const product = this.products.find((p) => p._id === item._id);
+            if (product && this.remainingStock(product) > 0) {
+              this.cart.push(product._id);
+            }
+          },
+          decreaseQuantity(item) {
+            const index = this.cart.lastIndexOf(item._id);
+            if (index !== -1) {
+              this.cart.splice(index, 1);
+            }
+          },
+          showCheckout() {
+            this.showProduct = false;
+          },
+          goHome() {
+            this.showProduct = true;
+          },
+          submitForm() {
+            const groupedItems = Object.values(this.cartSummary).map(
+              (item) => ({
+                id: item._id,
+                title: item.title,
+                quantity: item.count,
+              })
+            );
+
+            const orderData = { ...this.order, items: groupedItems };
+
+            fetch("http://localhost:3000/orders", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(orderData),
+            })
+              .then((res) => res.json())
+              .then((data) => {
+                alert(data.message);
+
+                // Update inventory for each product
+                this.products.forEach((product) => {
+                  fetch(`http://localhost:3000/lessons/${product._id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(product),
+                  });
+                });
+
+                this.cart = [];
+                this.goHome();
+              });
+          },
+          toggleSortDirection() {
+            this.sortAsc = !this.sortAsc;
+          },
+          canAddToCart(product) {
+            return this.remainingStock(product) > 0;
+          },
+          remainingStock(product) {
+            const cartCount = this.cart.filter(
+              (id) => id === product._id
+            ).length;
+            return product.availableInventory - cartCount;
+          },
+        },
+        computed: {
+          cartItemCount() {
+            return this.cart.length;
+          },
+          totalPrice() {
+            return Object.values(this.cartSummary).reduce(
+              (t, i) => t + i.price * i.count,
+              0
+            );
+          },
+          cartSummary() {
+            const summary = {};
+            this.cart.forEach((id) => {
+              if (!summary[id]) {
+                const item = this.products.find((p) => p._id === id);
+                if (item) summary[id] = { count: 1, ...item };
+              } else {
+                summary[id].count++;
+              }
+            });
+            return summary;
+          },
+          sortedProducts() {
+            return this.products
+              .filter((p) =>
+                p.title.toLowerCase().includes(this.searchQuery.toLowerCase())
+              )
+              .sort((a, b) => {
+                const result =
+                  a[this.sortKey] < b[this.sortKey]
+                    ? -1
+                    : a[this.sortKey] > b[this.sortKey]
+                    ? 1
+                    : 0;
+                return this.sortAsc ? result : -result;
+              });
+          },
+          isFormValid() {
+            return (
+              /^[A-Za-z\s]+$/.test(this.order.firstName) &&
+              /^[A-Za-z\s]+$/.test(this.order.lastName) &&
+              /^\d{7,15}$/.test(this.order.phone) &&
+              this.order.address.trim().length >= 10 &&
+              this.order.city &&
+              this.order.state &&
+              this.order.zip &&
+              /^\d{4,10}$/.test(this.order.zip)
+            );
+          },
+        },
+      });
+    </script>
+  </body>
+</html>

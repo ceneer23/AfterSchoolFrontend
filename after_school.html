@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sena's Food Store</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="products.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>{{ sitename }}</h1>
+            <input type="text" v-model="searchQuery" placeholder="Search products..." />
+            <button @click="showCheckout" :disabled="cartItemCount === 0">
+                {{ cartItemCount }}
+                <span class="fas fa-cart-plus"></span> Checkout
+            </button>
+        </header>
+        
+        <main>
+            <div v-if="showProduct" class="product-container">
+                <div v-for="product in filteredProducts" :key="product.id" class="product-card">
+                    <h2>{{ product.title }}</h2>
+                    <figure>
+                        <img :src="product.image" alt="Product Image">
+                    </figure>
+                    <p v-html="product.description"></p>
+                    <p>Price: ${{ product.price.toFixed(2) }}</p>
+                    <p>Available stock: {{ remainingStock(product) }}</p>
+                    
+                    <button @click="addToCart(product)" v-if="canAddToCart(product)" class="add-to-cart">Add to cart</button>
+                    <button disabled v-else>Add to cart</button>
+                    
+                    <span v-if="remainingStock(product) === 0">All out!</span>
+                    <span v-else-if="remainingStock(product) < 5">Only {{ remainingStock(product) }} left!</span>
+                    <span v-else>Buy now!</span>
+                    
+                    <div class="rating">
+                        <span v-for="n in product.rating">★</span>
+                        <span v-for="n in 5 - product.rating">☆</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div v-else>
+                <h2>Checkout</h2>
+                <div v-if="cart.length === 0">
+                    <p>Your cart is empty.</p>
+                </div>
+                <div v-else>
+                    <h3>Order Summary</h3>
+                    <ul>
+                        <li v-for="(item, productId) in cartSummary" :key="productId">
+                            <img :src="products.find(p => p.id == productId).image" alt="Product Image" style="width: 50px; height: 50px; margin-right: 10px;">
+                            {{ item.title }} - {{ item.count }} x ${{ item.price.toFixed(2) }}
+                            <button @click="removeFromCart(productId)">Remove</button>
+                        </li>
+                    </ul>
+                    <p><strong>Total Price:</strong> ${{ totalPrice.toFixed(2) }}</p>
+                </div>
+
+                <form @submit.prevent="submitForm">
+                    <p><strong>First Name:</strong> <input v-model.trim="order.firstName" required /></p>
+                    <p><strong>Last Name:</strong> <input v-model.trim="order.lastName" required /></p>
+                    <p><strong>Address:</strong> <input v-model="order.address" required /></p>
+                    <p><strong>City:</strong> <input v-model="order.city" required /></p>
+                    <p><strong>State:</strong>
+                        <select v-model="order.state" required>
+                            <option disabled value="">State</option>
+                            <option v-for="(state, key) in states" :value="state">{{ key }}</option>
+                        </select>
+                    </p>
+                    <p><strong>Zip / Postal Code:</strong> <input v-model.number="order.zip" type="number" required /></p>
+                    
+                    <p>
+                        <input type="checkbox" id="gift" value="true" v-model="order.gift">
+                        <label for="gift">Ship As Gift?</label>
+                    </p>
+                    <p>
+                        <input type="radio" id="home" value="Home" v-model="order.method" checked>
+                        <label for="home">Home</label>
+                        <input type="radio" id="business" value="Business" v-model="order.method">
+                        <label for="business">Business</label>
+                    </p>
+                    
+                    <button type="submit" :disabled="!isFormValid">Place Order</button>
+                    <button @click="showProduct = true">Back to Products</button>
+                </form>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        const products = [
+            {
+                id: 1,
+                title: "Cat Food",
+                description: "Cat's favorite food.",
+                price: 1.00,
+                availableInventory: 5,
+                rating: 4,
+                image: "images/Product.jpg"
+            },
+            {
+                id: 2,
+                title: "Dog Food",
+                description: "Very nutricious.",
+                price: 0.50,
+                availableInventory: 5,
+                rating: 5,
+                image: "images/DogFood.jpg"
+            },
+            {
+                id: 3,
+                title: "Rice",
+                description: "Fresh from africa.",
+                price: 0.75,
+                availableInventory: 5,
+                rating: 4,
+                image: "images/RiceBag.jpg"
+            },
+            {
+                id: 4,
+                title: "Beans",
+                description: "Top quality.",
+                price: 2.00,
+                availableInventory: 5,
+                rating: 3,
+                image: "images/BeansBag.jpg"
+            },
+            {
+                id: 5,
+                title: "Bread",
+                description: "Freshly baked bread.",
+                price: 6.99,
+                availableInventory: 5,
+                rating: 4,
+                image: "images/Bread.jpeg"
+            },
+            {
+                id: 6,
+                title: "Baked Bean",
+                description: "Yummy as seen.",
+                price: 5.50,
+                availableInventory: 5,
+                rating: 2,
+                image: "images/BakedBeans.jpeg"
+            },
+            {
+                id: 7,
+                title: "Salad",
+                description: "Goes with any meal.",
+                price: 2.25,
+                availableInventory: 5,
+                rating: 3,
+                image: "images/salad.jpeg"
+            },
+            {
+                id: 8,
+                title: "Noodles",
+                description: "Indomitable is inevitable.",
+                price: 1.50,
+                availableInventory: 5,
+                rating: 5,
+                image: "images/Noodles.jpeg"
+            },
+            {
+                id: 9,
+                title: "Coco Pops",
+                description: "Very delicious coco pops.",
+                price: 2.50,
+                availableInventory: 5,
+                rating: 2,
+                image: "images/CocoPops.jpeg"
+            },
+            {
+                id: 10,
+                title: "Rice Krispsies",
+                description: "A nice bag of crunchy rice krispsies.",
+                price: 1.00,
+                availableInventory: 5,
+                rating: 3,
+                image: "images/RiceKrispies.jpeg"
+            },
+            
+        ];
+
+        new Vue({
+            el: '#app',
+            data: {
+                sitename: "Sena's Food Store",
+                products: products,
+                cart: [],
+                showProduct: true,
+                searchQuery: "",
+                order: {
+                    firstName: '',
+                    lastName: '',
+                    address: '',
+                    city: '',
+                    zip: '',
+                    state: '',
+                    method: 'Home',
+                    gift: false
+                },
+                states: {
+                    AL: 'Alabama',
+                    AZ: 'Arizona',
+                    CA: 'California',
+                    NV: 'Nevada'
+                }
+            },
+            methods: {
+                addToCart(product) {
+                    this.cart.push(product.id);
+                },
+                removeFromCart(productId) {
+                    const index = this.cart.indexOf(productId);
+                    if (index !== -1) {
+                        this.cart.splice(index, 1); // Remove only one instance
+                    }
+                },
+                showCheckout() {
+                    this.showProduct = !this.showProduct;
+                },
+                submitForm() {
+                    if (this.isFormValid) {
+                        alert(`Thank you, ${this.order.firstName}! Your order of ${this.cartItemCount} items has been placed.`);
+                        this.cart = [];
+                        this.showProduct = true;
+                    } else {
+                        alert('Please fill in all required fields.');
+                    }
+                },
+                canAddToCart(product) {
+                    return product.availableInventory > this.cartCount(product.id);
+                },
+                cartCount(id) {
+                    return this.cart.filter(item => item === id).length;
+                },
+                remainingStock(product) {
+                    return product.availableInventory - this.cartCount(product.id);
+                }
+            },
+            computed: {
+                cartItemCount() {
+                    return Object.values(this.cartSummary).reduce((sum, item) => sum + item.count, 0);
+                },
+                totalPrice() {
+                    return Object.values(this.cartSummary).reduce((total, item) => total + item.price * item.count, 0);
+                },
+                filteredProducts() {
+                    return this.products.filter(product => product.title.toLowerCase().includes(this.searchQuery.toLowerCase()));
+                },
+                cartSummary() {
+                    const summary = {};
+                    this.cart.forEach(id => {
+                        if (!summary[id]) {
+                            summary[id] = { count: 1, ...this.products.find(p => p.id === id) };
+                        } else {
+                            summary[id].count++;
+                        }
+                    });
+                    return summary;
+                },
+                isFormValid() {
+                    return Object.values(this.order).every(val => val !== '');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

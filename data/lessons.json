@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1,
+    "title": "Chess",
+    "description": "Sharpen your mind with strategic thinking and board mastery.",
+    "price": 5.0,
+    "availableInventory": 12,
+    "rating": 4,
+    "image": "images/Chess.jpg"
+  },
+  {
+    "id": 2,
+    "title": "Cooking",
+    "description": "Hands-on fun learning to make tasty and healthy snacks.",
+    "price": 8.0,
+    "availableInventory": 10,
+    "rating": 5,
+    "image": "images/Cooking.jpg"
+  },
+  {
+    "id": 3,
+    "title": "Cycling",
+    "description": "Outdoor activity for building stamina, balance, and confidence.",
+    "price": 6.0,
+    "availableInventory": 15,
+    "rating": 4,
+    "image": "images/Cycling.jpg"
+  },
+  {
+    "id": 4,
+    "title": "Football",
+    "description": "Team up, compete and improve your footwork and teamwork.",
+    "price": 7.0,
+    "availableInventory": 18,
+    "rating": 5,
+    "image": "images/Football.jpg"
+  },
+  {
+    "id": 5,
+    "title": "Kite",
+    "description": "Enjoy the skies while learning the art of kite flying.",
+    "price": 4.0,
+    "availableInventory": 8,
+    "rating": 3,
+    "image": "images/Kite.jpg"
+  },
+  {
+    "id": 6,
+    "title": "Knitting",
+    "description": "Relax and create cool stuff with yarn in this cozy workshop.",
+    "price": 6.0,
+    "availableInventory": 10,
+    "rating": 4,
+    "image": "images/Knitting.jpg"
+  },
+  {
+    "id": 7,
+    "title": "Scrabble",
+    "description": "Build vocabulary and have fun in our word challenge game.",
+    "price": 5.0,
+    "availableInventory": 14,
+    "rating": 4,
+    "image": "images/Scrabble.jpg"
+  },
+  {
+    "id": 8,
+    "title": "Swimming",
+    "description": "Learn swimming techniques and boost your confidence in water.",
+    "price": 9.0,
+    "availableInventory": 10,
+    "rating": 5,
+    "image": "images/Swimming.jpg"
+  },
+  {
+    "id": 9,
+    "title": "Table Tennis",
+    "description": "Master fast-paced coordination and reflexes through fun games.",
+    "price": 6.0,
+    "availableInventory": 12,
+    "rating": 4,
+    "image": "images/TableTennis.jpg"
+  },
+  {
+    "id": 10,
+    "title": "Yoga",
+    "description": "Stretch, breathe, and find inner calm with guided kids yoga.",
+    "price": 7.0,
+    "availableInventory": 10,
+    "rating": 5,
+    "image": "images/YogaImage.jpg"
+  }
+]
