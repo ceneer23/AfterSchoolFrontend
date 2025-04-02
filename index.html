@@ -41,7 +41,11 @@
             class="product-card"
           >
             <h2>{{ product.title }}</h2>
-            <img :src="product.image" :alt="product.title" />
+            <!-- Load images from the Render service's /images route -->
+            <img
+              :src="'https://afterschoolbackend-3efk.onrender.com/images/' + product.image"
+              :alt="product.title"
+            />
             <p>{{ product.description }}</p>
             <p>Price: ${{ product.price.toFixed(2) }}</p>
             <p>Stock: {{ remainingStock(product) }}</p>
@@ -73,8 +77,9 @@
                   "
                 >
                   <div style="display: flex; align-items: center; gap: 10px">
+                    <!-- Load images from Render's /images route -->
                     <img
-                      :src="item.image"
+                      :src="'https://afterschoolbackend-3efk.onrender.com/images/' + item.image"
                       :alt="item.title"
                       style="width: 50px"
                     />
@@ -305,7 +310,8 @@
           },
         },
         created() {
-          fetch("http://localhost:3000/lessons")
+          // Use your Render backend URL instead of localhost
+          fetch("https://afterschoolbackend-3efk.onrender.com/lessons")
             .then((res) => res.json())
             .then((data) => (this.products = data));
         },
@@ -339,7 +345,8 @@
 
             const orderData = { ...this.order, items: groupedItems };
 
-            fetch("http://localhost:3000/orders", {
+            // Use your Render backend URL for orders
+            fetch("https://afterschoolbackend-3efk.onrender.com/orders", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(orderData),
@@ -348,13 +355,16 @@
               .then((data) => {
                 alert(data.message);
 
-                // Update inventory for each product
+                // Update inventory for each product using the Render backend
                 this.products.forEach((product) => {
-                  fetch(`http://localhost:3000/lessons/${product._id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(product),
-                  });
+                  fetch(
+                    `https://afterschoolbackend-3efk.onrender.com/lessons/${product._id}`,
+                    {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(product),
+                    }
+                  );
                 });
 
                 this.cart = [];
